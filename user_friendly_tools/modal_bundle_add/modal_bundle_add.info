@@ -1,0 +1,6 @@
+name = Modal bundle add
+description = Ajoute un lien, en dessous d'un champ entityreference, qui ouvre une popup pour ajouter une entité par rapport à la config du champs référence.
+core = 7.x
+package = User friendly tools
+dependencies[] = entityreference
+dependencies[] = ctools

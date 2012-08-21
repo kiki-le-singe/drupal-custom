@@ -1,0 +1,134 @@
+<?php
+
+/**
+ * @file
+ * CTools primary module file.
+ *
+ * @todo Description.
+ */
+
+// Voir : https://gist.github.com/1979037
+// Voir : http://awebfactory.com.ar/node/491
+// Voir : http://www.spsc.uniroma1.it/sites/all/modules/ctools/help/modal.html
+
+// ---------------------------------------------------------------------------
+// Drupal hooks.
+
+/**
+ *  Implements hook_menu()
+ */
+function modal_bundle_add_menu() {
+  $items['modal_bundle_add_test_page'] = array(
+    'title' => 'tEST',
+    'page callback' => 'modal_bundle_add_test_page',
+    'access callback' => TRUE,
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['modal_bundle_add/%ctools_js/add'] = array(
+    'title' => 'Animal',
+    'page callback' => 'modal_bundle_add_test',
+    'page arguments' => array(1),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+/*
+ * Implements hook_field_widget_form_alter().
+ */
+function modal_bundle_add_field_widget_form_alter(&$element, &$form_state, $context) {
+  // Add a css class to widget form elements for all fields of type mytype.
+  if ($context['field']['type'] == 'entityreference') {
+    dsm($context);
+    
+//    contiens les types référencés : contains the bundles referenced
+    dsm($context['field']['settings']['handler_settings']['target_bundles']);
+    
+    // Be sure not to overwrite existing attributes.
+//    $element['#attributes']['class'][] = 'myclass';
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Page callbacks
+
+/**
+ * Page callback to display links and render a container for AJAX stuff.
+ */
+function modal_bundle_add_test_page() {
+  global $user;
+
+  // Include the CTools tools that we need.
+  ctools_include('ajax');
+  ctools_include('modal');
+
+  // Add CTools' javascript to the page.
+  ctools_modal_add_js();
+
+  // Create a list of clickable links.
+  $links = array();
+
+  // Four ways to do our animal picking wizard.
+  $links[] = ctools_modal_text_button(t('Wizard (default modal)'), 'modal_bundle_add/nojs/add', t('Pick an animal'));
+
+  $output = theme('item_list', array('items' => $links, 'title' => t('Actions')));
+
+  return array('markup' => array('#markup' => $output));
+}
+
+/**
+ * A modal login callback.
+ */
+function modal_bundle_add_test($js = NULL) {
+  global $user;
+  
+  // Fall back if $js is not set.
+  if (!$js) {
+    return "javascript required";
+//    return drupal_get_form('article');
+  }  
+
+  // Include your ctools crap here
+//  ctools_include('node.pages', 'node', '');
+  module_load_include('inc', 'node', 'node.pages');
+  ctools_include('modal');
+  ctools_include('ajax');
+
+ // Create a blank node object here. You can also set values for your custom fields here as well.
+  $node = (object) array(
+    'uid' => $user->uid,
+    'name' => (isset($user->name) ? $user->name : ''),
+    'type' => 'article',
+//    'language' => LANGUAGE_NONE,
+    'language' => $user->language,
+  );
+
+  $form_state = array(
+  'title' => t('Login'),
+//  'ajax' => $js,
+  'ajax' => TRUE,
+  );
+  $form_state['build_info']['args'] = array($node);
+
+  $output = ctools_modal_form_wrapper('article_node_form', $form_state);
+
+  if (!empty($form_state['executed'])) {
+    // We'll just overwrite the form output if it was successful.
+    $output = array();
+    $output[] = ctools_modal_command_display(t('Success'), '<div class="modal-message">Successful</div>');
+    // Close the modal
+//    $output[] = ctools_modal_command_dismiss();
+  }
+
+  print ajax_render($output);
+  exit;
+
+
+//  ctools_include('modal');
+//  ctools_include('ajax');
+//
+//  ctools_modal_render('Disneyland', 'mickey');
+//  $commands = array('mickey');
+}
