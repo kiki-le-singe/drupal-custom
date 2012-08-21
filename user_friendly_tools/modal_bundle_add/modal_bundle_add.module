@@ -40,11 +40,18 @@ function modal_bundle_add_menu() {
  */
 function modal_bundle_add_field_widget_form_alter(&$element, &$form_state, $context) {
   // Add a css class to widget form elements for all fields of type mytype.
+  // Ajoute le fichier link-add-bundle.js seulement s'il y a un champ entityreference.
   if ($context['field']['type'] == 'entityreference') {
-    dsm($context);
     
-//    contiens les types référencés : contains the bundles referenced
-    dsm($context['field']['settings']['handler_settings']['target_bundles']);
+//    dsm($context);
+ 
+//  contains the bundles referenced
+//    dsm($context['field']['settings']['handler_settings']['target_bundles']);
+
+    
+    // Ajouter le javascript qui ajoute le lien de la modal
+    ctools_add_js('link-add-bundle', 'modal_bundle_add');
+//    drupal_add_js(drupal_get_path('module', 'modal_bundle_add') .'/js/link-add-bundle.js');
     
     // Be sure not to overwrite existing attributes.
 //    $element['#attributes']['class'][] = 'myclass';
