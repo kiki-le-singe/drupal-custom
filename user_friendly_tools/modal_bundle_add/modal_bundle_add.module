@@ -48,13 +48,17 @@ function modal_bundle_add_field_widget_form_alter(&$element, &$form_state, $cont
 //  contains the bundles referenced
 //    dsm($context['field']['settings']['handler_settings']['target_bundles']);
 
+    // Include the CTools tools that we need.
+    ctools_include('ajax');
+    ctools_include('modal');
+
+    // Add CTools' javascript to the page.
+    ctools_modal_add_js();
+
+    $element['#suffix'] = '<div>' . ctools_modal_text_button(t('Add content'), 'modal_bundle_add/nojs/add', t('Pick an animal')) . '</div>';
     
     // Ajouter le javascript qui ajoute le lien de la modal
-    ctools_add_js('link-add-bundle', 'modal_bundle_add');
-//    drupal_add_js(drupal_get_path('module', 'modal_bundle_add') .'/js/link-add-bundle.js');
-    
-    // Be sure not to overwrite existing attributes.
-//    $element['#attributes']['class'][] = 'myclass';
+//    ctools_add_js('link-add-bundle', 'modal_bundle_add');
   }
 }
 
