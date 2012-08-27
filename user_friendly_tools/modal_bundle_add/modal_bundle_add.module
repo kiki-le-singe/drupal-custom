@@ -31,6 +31,13 @@ function modal_bundle_add_menu() {
     'access callback' => TRUE,
     'type' => MENU_CALLBACK,
   );
+  $items['test/%ctools_js/test'] = array(
+    'title' => 'Animal',
+    'page callback' => 'test',
+    'page arguments' => array(1),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
 
   return $items;
 }
@@ -101,6 +108,7 @@ function modal_bundle_add_test_page() {
 
   // Four ways to do our animal picking wizard.
   $links[] = ctools_modal_text_button(t('Wizard (default modal)'), 'modal_bundle_add/nojs/add', t('Pick an animal'));
+  $links[] = ctools_modal_text_button(t('Test'), 'test/nojs/test', t('Test'));
 
   $output = theme('item_list', array('items' => $links, 'title' => t('Actions')));
 
@@ -180,4 +188,183 @@ function modal_bundle_add_library() {
       ctools_modal_add_js();
     }
   }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// http://preprocess.me/multi-steps-form-in-drupal-7-with-ctools
+
+// http://www.thecarneyeffect.co.uk/ctools-modal-wizard-multistep-form-using-ajax-drupal-7
+
+function test($js = NULL, $step = NULL) {
+  if ($js) {
+    ctools_include('modal');
+    ctools_include('ajax');
+  }
+  
+  $form_info = array(
+    'id' => 'kiki',
+    'path' => "test/" . ($js ? 'ajax' : 'nojs') . "/test/%step",
+    'show trail' => TRUE,
+    'show back' => TRUE,
+    'show cancel' => TRUE,
+    'show return' => FALSE,
+    'next callback' =>  'd77_poll_wizard_next',
+    'finish callback' => 'ctools_ajax_sample_wizard_finish',
+    'cancel callback' => 'd77_poll_wizard_cancel',
+    'order' => array( // this controls order, as well as form labels
+      'step1' => t('Step 1'),
+      'step2' => t('Step 2'),
+    ),
+    'forms' => array( // here we map a step to a form id.
+      'step1' => array( //What we're doing here is telling the wizard when step1 is passed as arg show the form with form_id d7_step_1
+        'form id' => 'd77_poll_step_1'
+      ),
+      'step2' => array(
+        'form id' => 'd77_poll_step_2'
+      ),
+    ),
+  );
+  
+  $object_id = 1;
+
+  if (empty($step)) {
+    // We reset the form when $step is NULL because that means they have
+    // for whatever reason started over.
+    ctools_ajax_sample_cache_clear($object_id);
+    $step = 'step1';
+  }
+
+  // This automatically gets defaults if there wasn't anything saved.
+  $object = ctools_ajax_sample_cache_get($object_id);
+  $form_state = array(
+    'ajax' => $js,
+    // Put our object and ID into the form state cache so we can easily find
+    // it.
+    'object_id' => $object_id,
+    'object' => &$object,
+  );
+  
+  // Send this all off to our form. This is like drupal_get_form only wizardy.
+  ctools_include('wizard');
+  $form = ctools_wizard_multistep_form($form_info, $step, $form_state);
+  $output = drupal_render($form);
+
+  // If $output is FALSE, there was no actual form.
+  if ($js) {
+    // If javascript is active, we have to use a render array.
+    $commands = array();
+    if ($output === FALSE || !empty($form_state['complete'])) {
+      // Dismiss the modal.
+//      $commands[] = ajax_command_html('#ctools-sample', $animal);
+      $commands[] = ctools_modal_command_dismiss();
+    }
+    else if (!empty($form_state['cancel'])) {
+      // If cancelling, return to the activity.
+      $commands[] = ctools_modal_command_dismiss();
+    }
+    else {
+      $commands = ctools_modal_form_render($form_state, $output);
+    }
+    print ajax_render($commands);
+    exit;
+  }
+}
+
+
+function d77_poll_step_1($form, &$form_state) {
+  
+  $form_state['title'] = t('What is awesome in Drupal 7?');
+  
+  $form['name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('What\'s your name?'),
+    '#required' => TRUE,
+  );
+  
+  $form['choices'] = array(
+    '#type' => 'radios',
+    '#title' => t('What is your favourite new Drupal 7 feature?'),
+    '#options' => d77_poll_options(),
+    '#default_value' => 0,
+    '#required' => TRUE,
+  );
+  
+  return $form;
+}
+
+function d77_poll_options() {
+  return array(
+    'article' => 'Article',
+    'page' => 'Page',
+  );
+}
+
+function d77_poll_step_2($form, &$form_state) {
+  
+  $name = $form_state['object']['name'];
+  $options = d77_poll_options();
+  $choice = $options[$form_state['object']['choices']];
+  
+  $form['message'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Hey @name, tell us why you chose @choice', array(
+      '@name' => $name,
+      '@choice' => $choice,
+    )),
+  );
+  
+  
+  return $form;
+}
+
+
+// ---------------------------------------------------------------------------
+// Wizard in-between helpers; what to do between or after forms.
+
+/**
+ * Next callback
+ */
+function d77_poll_wizard_next(&$form_state) {
+  $form_state['object'] = $form_state['values'];
+  ctools_ajax_sample_cache_set($form_state['object_id'], $form_state['object']);
+}
+
+function d77_poll_wizard_cancel(&$form_state) {
+  $form_state['cancel'] = TRUE;
 }
