@@ -10,7 +10,8 @@
 // Voir : https://gist.github.com/1979037
 // Voir : http://awebfactory.com.ar/node/491
 // Voir : http://www.spsc.uniroma1.it/sites/all/modules/ctools/help/modal.html
-
+// voir : http://www.ohmydrupal.fr/drupal-7/de-loverlay-ou-tu-veux-quand-tu-veux.html
+// 
 // ---------------------------------------------------------------------------
 // Drupal hooks.
 
@@ -18,12 +19,12 @@
  *  Implements hook_menu()
  */
 function modal_bundle_add_menu() {
-  $items['modal_bundle_add_test_page'] = array(
-    'title' => 'tEST',
-    'page callback' => 'modal_bundle_add_test_page',
-    'access callback' => TRUE,
-    'type' => MENU_NORMAL_ITEM,
-  );
+//  $items['modal_bundle_add_test_page'] = array(
+//    'title' => 'tEST',
+//    'page callback' => 'modal_bundle_add_test_page',
+//    'access callback' => TRUE,
+//    'type' => MENU_NORMAL_ITEM,
+//  );
   $items['modal_bundle_add/%ctools_js/add'] = array(
     'title' => 'Animal',
     'page callback' => 'modal_bundle_add_test',
@@ -68,21 +69,19 @@ function modal_bundle_add_field_widget_form_alter(&$element, &$form_state, $cont
     // We add that for all fields of type "entityreference".
     if ($context['field']['type'] == 'entityreference') {
 
-  //    dsm($context);
-
-  //  contains the bundles referenced
-  //    dsm($context['field']['settings']['handler_settings']['target_bundles']);
-
       modal_bundle_add_library();
       
-      // Include the CTools tools that we need.
-//      ctools_include('ajax');
-//      ctools_include('modal');
+      dsm($context['field']['settings']['handler_settings']['target_bundles']);
+      
+      // Loop on the bundles referenced
+      foreach ($context['field']['settings']['handler_settings']['target_bundles'] as $type) {
+        $_modal_bundle_add_node_type_get_name = _modal_bundle_add_node_type_get_name($type);
+        $text_link = t('Add content %type-name', array('%type-name' => $_modal_bundle_add_node_type_get_name['name']));
+        
+        $element[]['#suffix'] = '<div>' . ctools_modal_text_button($text_link, 'modal_bundle_add/nojs/add', $text_link) . '</div>';
+      }
 
-      // Add CTools' javascript to the page.
-//      ctools_modal_add_js();
-
-      $element['#suffix'] = '<div>' . ctools_modal_text_button(t('Add content'), 'modal_bundle_add/nojs/add', t('Pick an animal')) . '</div>';
+//      $element['#suffix'] = '<div>' . ctools_modal_text_button(t('Add content'), 'modal_bundle_add/nojs/add', t('Pick an animal')) . '</div>';
     }
   }
 }
@@ -93,6 +92,7 @@ function modal_bundle_add_field_widget_form_alter(&$element, &$form_state, $cont
 /**
  * Page callback to display links and render a container for AJAX stuff.
  */
+/*
 function modal_bundle_add_test_page() {
   global $user;
 
@@ -113,7 +113,7 @@ function modal_bundle_add_test_page() {
   $output = theme('item_list', array('items' => $links, 'title' => t('Actions')));
 
   return array('markup' => array('#markup' => $output));
-}
+}*/
 
 /**
  * A modal login callback.
@@ -190,6 +190,16 @@ function modal_bundle_add_library() {
   }
 }
 
+function _modal_bundle_add_node_type_get_name($type = NULL) {
+  if ($type != NULL) {
+    $select = db_select('node_type', 'nt');
+    $select->fields('nt', array('name'))
+      ->condition('type', $type);
+
+    return $select->execute()->fetchAssoc();
+  }
+  return NULL;
+}
 
 
 
@@ -226,6 +236,7 @@ function modal_bundle_add_library() {
 
 
 
+/*
 
 // http://preprocess.me/multi-steps-form-in-drupal-7-with-ctools
 
@@ -357,9 +368,6 @@ function d77_poll_step_2($form, &$form_state) {
 // ---------------------------------------------------------------------------
 // Wizard in-between helpers; what to do between or after forms.
 
-/**
- * Next callback
- */
 function d77_poll_wizard_next(&$form_state) {
   $form_state['object'] = $form_state['values'];
   ctools_ajax_sample_cache_set($form_state['object_id'], $form_state['object']);
@@ -368,3 +376,5 @@ function d77_poll_wizard_next(&$form_state) {
 function d77_poll_wizard_cancel(&$form_state) {
   $form_state['cancel'] = TRUE;
 }
+
+*/
